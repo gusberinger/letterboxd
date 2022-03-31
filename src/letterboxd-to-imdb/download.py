@@ -54,7 +54,4 @@ def parse_args(args):
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
-    print(args)
-    # print(list(download_list(args['url'], limit = 10)))
-
-    # print(list(download_list("https://letterboxd.com/hackfraud/likes/films/by/member-rating/", limit=50)))
+    print(list(download_list(args['url'], args['limit'])))

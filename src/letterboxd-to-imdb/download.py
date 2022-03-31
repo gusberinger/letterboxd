@@ -49,9 +49,14 @@ def parse_args(args):
     parser = argparse.ArgumentParser(description='Process letterbox link')
     parser.add_argument('url', metavar='url', type=str, help="The complete url to the letterboxd list")
     parser.add_argument('-limit', '-l', dest="limit", type=int, default=None)
-    return vars(parser.parse_args(args))
+    result = vars(parser.parse_args(args))
+    if not result['url'].startswith('https://letterboxd.com/'):
+        raise ValueError("Not a valid url.")
+    return result
 
 
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
-    print(list(download_list(args['url'], args['limit'])))
+    print(sys.argv[1:])
+    # print(args)
+    # print(list(download_list(args['url'], args['limit'])))

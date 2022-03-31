@@ -1,11 +1,11 @@
 from ast import parse
+import itertools
 import re
 import requests
 from bs4 import BeautifulSoup
 
 base_url = "https://letterboxd.com"
-
-imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7})/maindetails")
+imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetails")
 
 def _find_links_in_list(list_link):
     """Finds all the links from a list"""
@@ -27,16 +27,14 @@ def _parse_link(movie_link):
     soup = BeautifulSoup(page, "html.parser")
     imdb_tag = soup.find("a", {"data-track-action": "IMDb"})
     imdb_url = imdb_tag.get("href")
+    print(imdb_url)
     imdb_id = re.match(imdb_pattern, imdb_url).group(1)
     return imdb_id
 
 
-def download_list(list_link):
+def download_list(list_link, limit=None):
     movie_links = _find_links_in_list(list_link)
-    return (_parse_link(movie_id) for movie_id in movie_links)
-
-    
-
+    return itertools.islice(movie_links, limit)
 
 if __name__ == "__main__":
-    print(list(download_list("https://letterboxd.com/testuser_py/likes/films/")))
+    print(list(download_list("https://letterboxd.com/hackfraud/likes/films/by/member-rating/")))

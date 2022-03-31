@@ -1,5 +1,5 @@
 import argparse
-from ast import parse
+from functools import cache
 import itertools
 import re
 import sys
@@ -24,6 +24,7 @@ def _find_links_in_list(list_link, limit = float("inf"), acc = 0):
         yield from _find_links_in_list(next_url, limit, acc + len(items))
 
 
+@cache
 def _parse_link(movie_link):
     response = requests.get(movie_link)
     page = response.text

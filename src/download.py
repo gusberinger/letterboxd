@@ -1,7 +1,8 @@
 import argparse
+from ast import parse
 import itertools
 import re
-from unicodedata import numeric
+import sys
 import requests
 from bs4 import BeautifulSoup
 
@@ -17,7 +18,8 @@ def _find_links_in_list(list_link, limit = float("inf"), acc = 0):
     items = table.find_all("li")
     movie_links = (f"{base_url}{li.div.get('data-film-slug')}" for li in items)
     yield from movie_links
-    if next_url_tag := soup.find("a", class_="next") and acc < limit:
+    next_url_tag = soup.find("a", class_="next") 
+    if next_url_tag and acc < limit:
         next_url = f"{base_url}{next_url_tag.get('href')}"
         yield from _find_links_in_list(next_url, limit, acc + len(items))
 
@@ -42,12 +44,16 @@ def download_list(list_link, limit=None):
     imdb_ids = (_parse_link(movie) for movie in movie_links)
     return itertools.islice(imdb_ids, limit)
 
-if __name__ == "__main__":
+def parse_args(args):
     parser = argparse.ArgumentParser(description='Process letterbox link')
     parser.add_argument('url', metavar='url', type=str, help="The complete url to the letterboxd list")
-    parser.add_argument('-limit', dest="limit", type=int, default=None)
-    args = vars(parser.parse_args())
+    parser.add_argument('-limit', '-l', dest="limit", type=int, default=None)
+    return vars(parser.parse_args(args))
+
+
+if __name__ == "__main__":
+    args = parse_args(sys.argv[1:])
     print(args)
-    print(list(download_list(args['url'], limit = args['limit'])))
+    # print(list(download_list(args['url'], limit = 10)))
 
     # print(list(download_list("https://letterboxd.com/hackfraud/likes/films/by/member-rating/", limit=50)))

@@ -1,4 +1,3 @@
-from turtle import down
 import download
 import unittest
 
@@ -36,18 +35,39 @@ class DownloadListTest(unittest.TestCase):
     def test_args(self):
         
         self.assertEqual(
-            download.parse_args("https://letterboxd.com/testuser_py/list/larger-list/ -limit 10"),
-            {'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'limit': 10}
+            download.parse_args([
+                "https://letterboxd.com/testuser_py/list/larger-list/",
+                "-limit",
+                "10"
+            ]),
+            {
+                'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'limit': 10
+            }
         )
 
         self.assertEqual(
-            download.parse_args("https://letterboxd.com/testuser_py/list/larger-list/ -l 10"),
-            {'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'limit': 10}
+            download.parse_args([
+                "https://letterboxd.com/testuser_py/list/larger-list/", 
+                "-l", 
+                "10"
+            ]),
+            {
+                'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'limit': 10
+            }
         )
 
         self.assertEqual(
-            download.parse_args("https://letterboxd.com/testuser_py/list/larger-list/"),
-            {'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'limit': None}
+            download.parse_args([
+                "https://letterboxd.com/testuser_py/list/larger-list/"
+            ]),
+            {
+                'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'limit': None
+            }
+        )
+
+        self.assertRaises(
+            ValueError, 
+            lambda: download.parse_args(["letterboxd.com/testuser_py/list/larger-list/"])
         )
 
 

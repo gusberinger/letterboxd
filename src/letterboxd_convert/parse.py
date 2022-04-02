@@ -1,7 +1,7 @@
 import argparse
 import re
 
-url_match = re.compile(r"(?:https://)?(?:www\.)?(letterboxd\.com/.*)")
+url_match = re.compile(r"(?:https?://)?(?:www\.)?(letterboxd\.com/.*)")
 
 
 def parse_args(args):

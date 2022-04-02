@@ -16,7 +16,6 @@ def _find_links_in_list(list_link, limit = float("inf"), acc = 0):
     items = table.find_all("li")
     movie_links = (f"{base_url}{li.div.get('data-film-slug')}" for li in items)
     yield from movie_links
-    pbar.update(1)
     next_url_tag = soup.find("a", class_="next") 
     if next_url_tag and acc < limit:
         next_url = f"{base_url}{next_url_tag.get('href')}"

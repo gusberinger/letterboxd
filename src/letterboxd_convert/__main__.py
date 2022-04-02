@@ -1,4 +1,4 @@
-from download import download_list
+from .download import download_list
 import argparse
 import sys
 

@@ -1,1 +1,1 @@
-from .download import download_list
+from .download import download_list # noqa

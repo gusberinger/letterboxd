@@ -1,4 +1,5 @@
 # letterboxd-convert
+![Tests](https://github.com/gusberinger/letterboxd-convert/actions/workflows/tests.yml/badge.svg)
 
 Convert letterboxd.com lists to a list of imdb ids.
 

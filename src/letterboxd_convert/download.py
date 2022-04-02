@@ -40,15 +40,25 @@ def _parse_link(movie_link: str) -> str:
     return imdb_id
 
 
-def download_list(list_link: str,
+def download_list(list_url: str,
                   limit: Optional[int] = None, rate: int = 1) -> Iterable[str]:
+    """
+    Parameters
+    ___
+    list_url:
+        The url to the letterboxd.com list.
+    limit:
+        The maximum number of movies to fetch from the list.
+    rate:
+        The wait time in seconds between every 20 movies.
+    """
     if limit is None:
         numerical_limit = float("inf")
     else:
         numerical_limit = limit
     rate = max(rate, 1)
     movie_links = _find_links_in_list(
-        list_link,
+        list_url,
         limit=numerical_limit,
         rate=rate)
     imdb_ids = (_parse_link(movie) for movie in movie_links)

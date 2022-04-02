@@ -1,10 +1,11 @@
 import argparse
 import re
+from typing import Any, List
 
 url_match = re.compile(r"(?:https?://)?(?:www\.)?(letterboxd\.com/.*)")
 
 
-def parse_args(args):
+def parse_args(args: List[str]) -> dict[str, Any]:
     parser = argparse.ArgumentParser(description='Process letterbox link')
     parser.add_argument('url', metavar='url', type=str,
                         help="The complete url to the letterboxd list")

@@ -11,7 +11,8 @@ imdb_pattern = re.compile(
 )
 
 
-def _find_links_in_list(list_link, limit=float("inf"), acc=0, rate=1):
+def _find_links_in_list(list_link: str, limit: float = float("inf"),
+                        acc: int = 0, rate: float = 1):
     """Finds all the links from a list"""
     response = requests.get(list_link)
     soup = BeautifulSoup(response.text, "html.parser")

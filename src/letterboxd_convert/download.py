@@ -2,6 +2,7 @@ from functools import cache
 import itertools
 import re
 import time
+from typing import Optional
 import requests
 from bs4 import BeautifulSoup
 
@@ -27,17 +28,19 @@ def _find_links_in_list(list_link: str, limit: float = float("inf"),
 
 
 @cache
-def _parse_link(movie_link):
+def _parse_link(movie_link: str):
     response = requests.get(movie_link)
     page = response.text
     soup = BeautifulSoup(page, "html.parser")
     imdb_tag = soup.find("a", {"data-track-action": "IMDb"})
     imdb_url = imdb_tag.get("href")
-    imdb_id = re.match(imdb_pattern, imdb_url).group(1)
+    imdb_id_match = re.match(imdb_pattern, imdb_url)
+    assert imdb_id_match is not None
+    imdb_id = imdb_id_match.group(1)
     return imdb_id
 
 
-def download_list(list_link, limit=None, rate=1):
+def download_list(list_link: str, limit: Optional[int] = None, rate: int = 1):
     if limit is None:
         numerical_limit = float("inf")
     else:

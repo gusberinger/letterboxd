@@ -72,11 +72,29 @@ class ArgumentParseTest(unittest.TestCase):
             }
         )
 
-    def test_invalid_url(self):
+    def test_http(self):
+        self.assertEqual(
+            parse.parse_args([
+                "http://letterboxd.com/testuser_py/list/larger-list/"
+            ]),
+            {
+                'url': 'https://letterboxd.com/testuser_py/list/larger-list/',
+                'limit': None
+            }
+        )
 
+    def test_invalid(self):
         self.assertRaises(
-            ValueError, 
-            lambda: parse.parse_args(["http://letterboxd.com/testuser_py/list/larger-list/"])
+            ValueError,
+            lambda: parse.parse_args([
+               "htp://letterboxd.com/testuser_py/list/larger-list/"
+            ])
+        )
+        self.assertRaises(
+            ValueError,
+            lambda: parse.parse_args([
+               "http://letterbod.com/testuser_py/list/larger-list/"
+            ])
         )
 
 

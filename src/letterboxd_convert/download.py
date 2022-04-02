@@ -1,21 +1,14 @@
-import argparse
 from functools import cache
 import itertools
-import math
 import re
-import sys
 import requests
 from bs4 import BeautifulSoup
-from tqdm import tqdm
 
 base_url = "https://letterboxd.com"
 imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetails")
 
-def _find_links_in_list(list_link, limit = float("inf"), acc = 0, pbar = None):
+def _find_links_in_list(list_link, limit = float("inf"), acc = 0):
     """Finds all the links from a list"""
-    if pbar is None:
-        pbar = tqdm(total = math.ceil(limit / 72))
-
     response = requests.get(list_link)
     page = response.text
     soup = BeautifulSoup(page, "html.parser")
@@ -27,9 +20,7 @@ def _find_links_in_list(list_link, limit = float("inf"), acc = 0, pbar = None):
     next_url_tag = soup.find("a", class_="next") 
     if next_url_tag and acc < limit:
         next_url = f"{base_url}{next_url_tag.get('href')}"
-        yield from _find_links_in_list(next_url, limit, acc + len(items), pbar)
-    else:
-        pbar.close()
+        yield from _find_links_in_list(next_url, limit, acc + len(items))
 
 
 @cache
@@ -52,20 +43,3 @@ def download_list(list_link, limit=None):
     movie_links = _find_links_in_list(list_link, limit=numerical_limit)
     imdb_ids = (_parse_link(movie) for movie in movie_links)
     return itertools.islice(imdb_ids, limit)
-
-def parse_args(args):
-    parser = argparse.ArgumentParser(description='Process letterbox link')
-    parser.add_argument('url', metavar='url', type=str, help="The complete url to the letterboxd list")
-    parser.add_argument('-limit', '-l', dest="limit", type=int, default=None)
-    result = vars(parser.parse_args(args))
-    if not result['url'].startswith('https://letterboxd.com/'):
-        raise ValueError("Not a valid url.")
-    return result
-
-
-def main():
-    args = parse_args(sys.argv[1:])
-    print(list(download_list(args['url'], args['limit'])))
-
-if __name__ == "__main__":
-    main()

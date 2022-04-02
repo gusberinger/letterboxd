@@ -44,7 +44,7 @@ class ArgumentParseTest(unittest.TestCase):
                 "10"
             ]),
             {
-                'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'limit': 10
+                'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'rate': 1, 'limit': 10
             }
         )
     
@@ -57,7 +57,7 @@ class ArgumentParseTest(unittest.TestCase):
                 "10"
             ]),
             {
-                'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'limit': 10
+                'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'rate': 1, 'limit': 10
             }
         )
 
@@ -68,7 +68,7 @@ class ArgumentParseTest(unittest.TestCase):
                 "https://letterboxd.com/testuser_py/list/larger-list/"
             ]),
             {
-                'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'limit': None
+                'url': 'https://letterboxd.com/testuser_py/list/larger-list/', 'rate': 1, 'limit': None
             }
         )
 
@@ -79,7 +79,7 @@ class ArgumentParseTest(unittest.TestCase):
             ]),
             {
                 'url': 'https://letterboxd.com/testuser_py/list/larger-list/',
-                'limit': None
+                'rate': 1, 'limit': None
             }
         )
 
@@ -100,4 +100,5 @@ class ArgumentParseTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    # DownloadListTest = None
     unittest.main()

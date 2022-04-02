@@ -2,7 +2,7 @@ from functools import cache
 import itertools
 import re
 import time
-from typing import Optional
+from typing import Iterable, Optional
 import requests
 from bs4 import BeautifulSoup
 
@@ -13,7 +13,7 @@ imdb_pattern = re.compile(
 
 
 def _find_links_in_list(list_link: str, limit: float = float("inf"),
-                        acc: int = 0, rate: float = 1):
+                        acc: int = 0, rate: float = 1) -> Iterable[str]:
     """Finds all the links from a list"""
     response = requests.get(list_link)
     soup = BeautifulSoup(response.text, "html.parser")
@@ -28,7 +28,7 @@ def _find_links_in_list(list_link: str, limit: float = float("inf"),
 
 
 @cache
-def _parse_link(movie_link: str):
+def _parse_link(movie_link: str) -> str:
     response = requests.get(movie_link)
     page = response.text
     soup = BeautifulSoup(page, "html.parser")
@@ -40,7 +40,8 @@ def _parse_link(movie_link: str):
     return imdb_id
 
 
-def download_list(list_link: str, limit: Optional[int] = None, rate: int = 1):
+def download_list(list_link: str,
+                  limit: Optional[int] = None, rate: int = 1) -> Iterable[str]:
     if limit is None:
         numerical_limit = float("inf")
     else:

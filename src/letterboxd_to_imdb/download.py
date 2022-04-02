@@ -55,8 +55,9 @@ def parse_args(args):
     return result
 
 
-if __name__ == "__main__":
+def main():
     args = parse_args(sys.argv[1:])
-    print(sys.argv[1:])
-    # print(args)
-    # print(list(download_list(args['url'], args['limit'])))
+    print(list(download_list(args['url'], args['limit'])))
+
+if __name__ == "__main__":
+    main()

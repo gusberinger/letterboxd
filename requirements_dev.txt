@@ -1,0 +1,2 @@
+flake8==4.0.1
+types-beautifulsoup4==4.10.16

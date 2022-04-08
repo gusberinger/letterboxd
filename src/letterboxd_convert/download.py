@@ -6,13 +6,14 @@ from typing import Iterable, Optional
 import requests
 from bs4 import BeautifulSoup
 
+
 base_url = "https://letterboxd.com"
 imdb_pattern = re.compile(
     r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetails"
 )
 
 
-def _find_links_in_list(list_link: str, limit: float = float("inf"),
+def _find_pages_in_list(list_link: str, limit: float = float("inf"),
                         acc: int = 0, rate: float = 1) -> Iterable[str]:
     """Finds all the links from a list"""
     response = requests.get(list_link)
@@ -24,12 +25,12 @@ def _find_links_in_list(list_link: str, limit: float = float("inf"),
     if next_url_tag and acc < limit:
         next_url = f"{base_url}{next_url_tag.get('href')}"
         time.sleep(rate)
-        yield from _find_links_in_list(next_url, limit, acc + len(items))
+        yield from _find_pages_in_list(next_url, limit, acc + len(items))
 
 
 @cache
-def _parse_link(movie_link: str) -> str:
-    response = requests.get(movie_link)
+def _parse_page(page_url: str) -> str:
+    response = requests.get(page_url)
     page = response.text
     soup = BeautifulSoup(page, "html.parser")
     imdb_tag = soup.find("a", {"data-track-action": "IMDb"})
@@ -57,9 +58,9 @@ def download_list(list_url: str,
     else:
         numerical_limit = limit
     rate = max(rate, 1)
-    movie_links = _find_links_in_list(
+    movie_links = _find_pages_in_list(
         list_url,
         limit=numerical_limit,
         rate=rate)
-    imdb_ids = (_parse_link(movie) for movie in movie_links)
+    imdb_ids = (_parse_page(movie) for movie in movie_links)
     return itertools.islice(imdb_ids, limit)

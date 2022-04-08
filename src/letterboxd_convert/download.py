@@ -8,13 +8,12 @@ from bs4 import BeautifulSoup
 
 
 base_url = "https://letterboxd.com"
-imdb_pattern = re.compile(
-    r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetails"
-)
+imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetails")
 
 
-def _find_pages_in_list(list_link: str, limit: float = float("inf"),
-                        acc: int = 0, rate: float = 1) -> Iterable[str]:
+def _find_pages_in_list(
+    list_link: str, limit: float = float("inf"), acc: int = 0, rate: float = 1
+) -> Iterable[str]:
     """Finds all the links from a list"""
     response = requests.get(list_link)
     soup = BeautifulSoup(response.text, "html.parser")
@@ -41,8 +40,9 @@ def _parse_page(page_url: str) -> str:
     return imdb_id
 
 
-def download_list(list_url: str,
-                  limit: Optional[int] = None, rate: int = 1) -> Iterable[str]:
+def download_list(
+    list_url: str, limit: Optional[int] = None, rate: int = 1
+) -> Iterable[str]:
     """
     Parameters
     ___
@@ -58,9 +58,6 @@ def download_list(list_url: str,
     else:
         numerical_limit = limit
     rate = max(rate, 1)
-    movie_links = _find_pages_in_list(
-        list_url,
-        limit=numerical_limit,
-        rate=rate)
+    movie_links = _find_pages_in_list(list_url, limit=numerical_limit, rate=rate)
     imdb_ids = (_parse_page(movie) for movie in movie_links)
     return itertools.islice(imdb_ids, limit)

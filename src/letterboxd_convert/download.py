@@ -3,7 +3,6 @@ import itertools
 import re
 import time
 from typing import Iterable, Optional, List
-import requests
 import httpx
 import asyncio
 from bs4 import BeautifulSoup
@@ -16,7 +15,7 @@ def _find_pages_in_list(
     list_url: str, limit: float = float("inf"), acc: int = 0, rate: float = 1
 ) -> Iterable[str]:
     """Finds all the links from a list"""
-    response = requests.get(list_url)
+    response = httpx.get(list_url)
     soup = BeautifulSoup(response.text, "html.parser")
     items = soup.find("ul", class_="poster-list").find_all("li")
     movie_links = (f"{base_url}{li.div.get('data-film-slug')}" for li in items)

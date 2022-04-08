@@ -2,10 +2,10 @@ from functools import cache
 import itertools
 import re
 import time
-from typing import Iterable, Match, Optional, Union
+from typing import Iterable, Optional
 import httpx
 import asyncio
-from bs4 import BeautifulSoup, NavigableString, Tag, ResultSet
+from bs4 import BeautifulSoup, Tag
 
 base_url = "https://letterboxd.com"
 imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetails")

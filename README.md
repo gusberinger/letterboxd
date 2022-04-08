@@ -3,6 +3,12 @@
 
 Convert letterboxd.com lists to a list of imdb ids.
 
+## Install
+```
+pip install letterboxd-convert
+```
+
+
 ## Usage
 
 CLI usage

@@ -2,7 +2,7 @@ from functools import cache
 import itertools
 import re
 import time
-from typing import Iterable, Optional, List
+from typing import Iterable, Optional
 import httpx
 import asyncio
 from bs4 import BeautifulSoup
@@ -27,7 +27,7 @@ def _find_pages_in_list(
         yield from _find_pages_in_list(next_url, limit, acc + len(items))
 
 
-async def download_pages(page_urls: List[str]):
+async def download_pages(page_urls: Iterable[str]):
     async with httpx.AsyncClient() as client:
         pages = (client.get(url) for url in page_urls)
         responses = await asyncio.gather(*pages)

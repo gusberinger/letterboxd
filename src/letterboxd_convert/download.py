@@ -33,13 +33,6 @@ async def download_pages(page_urls: List[str]):
         responses = await asyncio.gather(*pages)
     return responses
 
-# async def download_pages(page_urls):
-#     print(page_urls)
-#     async with httpx.AsyncClient() as client:
-#         response = await client.get('https://www.example.com/')
-#         # print(response.text)
-#     return response
-
 
 @cache
 def _parse_page(page_response: str) -> str:

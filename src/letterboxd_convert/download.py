@@ -1,7 +1,6 @@
 from functools import cache
 import itertools
 import re
-import time
 from typing import Iterable, Optional
 import httpx
 import asyncio

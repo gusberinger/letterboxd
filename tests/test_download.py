@@ -2,9 +2,6 @@ import unittest
 from letterboxd_convert import download_list
 from letterboxd_convert.parse import parse_args
 
-# import letterboxd_convert
-# letterboxd_convert.parse.parse_args
-
 
 small_list = (
     "https://letterboxd.com/testuser_py/list/test-list/",

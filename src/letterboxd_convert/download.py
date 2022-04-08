@@ -44,6 +44,7 @@ def _parse_page(page_response: httpx.Response) -> str:
     imdb_tag = soup.find("a", {"data-track-action": "IMDb"})
     assert isinstance(imdb_tag, Tag)
     imdb_url = imdb_tag.get("href")
+    assert isinstance(imdb_url, str)
     imdb_id_match = re.match(imdb_pattern, imdb_url)
     assert imdb_id_match is not None
     imdb_id = imdb_id_match.group(1)

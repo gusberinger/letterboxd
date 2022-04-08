@@ -2,20 +2,20 @@ from functools import cache
 import itertools
 import re
 import time
-from typing import Iterable, Optional
-import requests
+from typing import Iterable, Optional, List
+import httpx
+import asyncio
 from bs4 import BeautifulSoup
-
 
 base_url = "https://letterboxd.com"
 imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetails")
 
 
 def _find_pages_in_list(
-    list_link: str, limit: float = float("inf"), acc: int = 0, rate: float = 1
+    list_url: str, limit: float = float("inf"), acc: int = 0, rate: float = 1
 ) -> Iterable[str]:
     """Finds all the links from a list"""
-    response = requests.get(list_link)
+    response = httpx.get(list_url)
     soup = BeautifulSoup(response.text, "html.parser")
     items = soup.find("ul", class_="poster-list").find_all("li")
     movie_links = (f"{base_url}{li.div.get('data-film-slug')}" for li in items)
@@ -27,10 +27,16 @@ def _find_pages_in_list(
         yield from _find_pages_in_list(next_url, limit, acc + len(items))
 
 
+async def download_pages(page_urls: List[str]):
+    async with httpx.AsyncClient() as client:
+        pages = (client.get(url) for url in page_urls)
+        responses = asyncio.gather(*pages)
+    return responses
+
+
 @cache
-def _parse_page(page_url: str) -> str:
-    response = requests.get(page_url)
-    page = response.text
+def _parse_page(page_response: str) -> str:
+    page = page_response.text
     soup = BeautifulSoup(page, "html.parser")
     imdb_tag = soup.find("a", {"data-track-action": "IMDb"})
     imdb_url = imdb_tag.get("href")
@@ -59,5 +65,6 @@ def download_list(
         numerical_limit = limit
     rate = max(rate, 1)
     movie_links = _find_pages_in_list(list_url, limit=numerical_limit, rate=rate)
-    imdb_ids = (_parse_page(movie) for movie in movie_links)
+    pages = download_pages(movie_links)
+    imdb_ids = (_parse_page(page) for page in pages)
     return itertools.islice(imdb_ids, limit)

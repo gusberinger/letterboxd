@@ -196,10 +196,6 @@ class ArgumentParseTest(unittest.TestCase):
             ),
             {
                 "url": "https://letterboxd.com/testuser_py/list/larger-list/",
-<<<<<<< HEAD
-=======
-                "rate": 1,
->>>>>>> master
                 "limit": 10,
             },
         )
@@ -210,10 +206,6 @@ class ArgumentParseTest(unittest.TestCase):
             parse_args(["https://letterboxd.com/testuser_py/list/larger-list/"]),
             {
                 "url": "https://letterboxd.com/testuser_py/list/larger-list/",
-<<<<<<< HEAD
-=======
-                "rate": 1,
->>>>>>> master
                 "limit": None,
             },
         )
@@ -223,10 +215,6 @@ class ArgumentParseTest(unittest.TestCase):
             parse_args(["http://letterboxd.com/testuser_py/list/larger-list/"]),
             {
                 "url": "https://letterboxd.com/testuser_py/list/larger-list/",
-<<<<<<< HEAD
-=======
-                "rate": 1,
->>>>>>> master
                 "limit": None,
             },
         )

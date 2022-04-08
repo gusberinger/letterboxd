@@ -2,9 +2,6 @@ import unittest
 from letterboxd_convert import download_list
 from letterboxd_convert.parse import parse_args
 
-# import letterboxd_convert
-# letterboxd_convert.parse.parse_args
-
 
 small_list = (
     "https://letterboxd.com/testuser_py/list/test-list/",
@@ -187,7 +184,6 @@ class ArgumentParseTest(unittest.TestCase):
             ),
             {
                 "url": "https://letterboxd.com/testuser_py/list/larger-list/",
-                "rate": 1,
                 "limit": 10,
             },
         )
@@ -200,7 +196,6 @@ class ArgumentParseTest(unittest.TestCase):
             ),
             {
                 "url": "https://letterboxd.com/testuser_py/list/larger-list/",
-                "rate": 1,
                 "limit": 10,
             },
         )
@@ -211,7 +206,6 @@ class ArgumentParseTest(unittest.TestCase):
             parse_args(["https://letterboxd.com/testuser_py/list/larger-list/"]),
             {
                 "url": "https://letterboxd.com/testuser_py/list/larger-list/",
-                "rate": 1,
                 "limit": None,
             },
         )
@@ -221,7 +215,6 @@ class ArgumentParseTest(unittest.TestCase):
             parse_args(["http://letterboxd.com/testuser_py/list/larger-list/"]),
             {
                 "url": "https://letterboxd.com/testuser_py/list/larger-list/",
-                "rate": 1,
                 "limit": None,
             },
         )

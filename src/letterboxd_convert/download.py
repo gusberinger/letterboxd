@@ -1,7 +1,6 @@
 from functools import cache
 import itertools
 import re
-import time
 from typing import Iterable, Optional
 import httpx
 import asyncio
@@ -12,7 +11,7 @@ imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetail
 
 
 def _find_pages_in_list(
-    list_url: str, limit: float = float("inf"), acc: int = 0, rate: float = 1
+    list_url: str, limit: float = float("inf"), acc: int = 0
 ) -> Iterable[str]:
     """Finds all the links from a list"""
     response = httpx.get(list_url)
@@ -26,7 +25,6 @@ def _find_pages_in_list(
     if next_url_tag and acc < limit:
         assert isinstance(next_url_tag, Tag)
         next_url = f"{base_url}{next_url_tag.get('href')}"
-        time.sleep(rate)
         yield from _find_pages_in_list(next_url, limit, acc + len(items))
 
 
@@ -61,15 +59,12 @@ def download_list(
         The url to the letterboxd.com list.
     limit:
         The maximum number of movies to fetch from the list.
-    rate:
-        The wait time in seconds between every 20 movies.
     """
     if limit is None:
         numerical_limit = float("inf")
     else:
         numerical_limit = limit
-    rate = max(rate, 1)
-    movie_links = _find_pages_in_list(list_url, limit=numerical_limit, rate=rate)
+    movie_links = _find_pages_in_list(list_url, limit=numerical_limit)
     pages = asyncio.run(download_pages(movie_links))
     imdb_ids = (_parse_page(page) for page in pages)
     return itertools.islice(imdb_ids, limit)

@@ -1,2 +1,4 @@
 flake8==4.0.1
 types-beautifulsoup4==4.10.16
+tox==3.24.5
+black==22.3.0

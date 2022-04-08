@@ -184,10 +184,6 @@ class ArgumentParseTest(unittest.TestCase):
             ),
             {
                 "url": "https://letterboxd.com/testuser_py/list/larger-list/",
-<<<<<<< HEAD
-=======
-                "rate": 1,
->>>>>>> master
                 "limit": 10,
             },
         )

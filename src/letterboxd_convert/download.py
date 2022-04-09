@@ -2,7 +2,7 @@ import logging
 import asyncio
 import re
 import itertools
-from typing import Iterable, Optional
+from typing import Iterable, List, Optional
 import httpx
 from bs4 import BeautifulSoup, Tag
 
@@ -56,7 +56,7 @@ def _parse_page(page_response: httpx.Response) -> str:
     return imdb_id
 
 
-def download_urls(url_list: Iterable[str]) -> Iterable[str]:
+def download_urls(url_list: List[str]) -> Iterable[str]:
     """
     Returns a list of tconsts.
     """

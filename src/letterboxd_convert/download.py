@@ -56,11 +56,11 @@ def _parse_page(page_response: httpx.Response) -> str:
     return imdb_id
 
 
-def download_urls(url_list: List[str]) -> Iterable[str]:
+def download_urls(url_list: List[str]) -> List[str]:
     """
     Returns a list of tconsts.
     """
-    result = [None] * len(url_list)
+    result: List[str] = [''] * len(url_list)
     db = DBConnection()
     request_download = []
     request_index = []

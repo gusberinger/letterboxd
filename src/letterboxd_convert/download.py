@@ -1,7 +1,7 @@
 import logging
 import re
 import itertools
-from typing import Iterable, List, Optional
+from typing import Iterable, Optional
 import httpx
 from bs4 import BeautifulSoup, Tag
 
@@ -62,7 +62,7 @@ def download_urls(url_list: Iterable[str]) -> Iterable[str]:
             tconst = _parse_page(page)
             db.cache_url(page_url, tconst)
             yield tconst
-        except MissingIMDbPage as e:
+        except MissingIMDbPage:
             logging.warn(f"Movie at url:{page_url} has no IMDb page.")
 
 

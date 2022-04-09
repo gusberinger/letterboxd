@@ -5,6 +5,7 @@ from typing import Iterable, Optional
 import httpx
 import asyncio
 from bs4 import BeautifulSoup, Tag
+from .database import DBConnection
 
 base_url = "https://letterboxd.com"
 imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetails")
@@ -39,7 +40,6 @@ def _find_pages_in_list(
         yield from _find_pages_in_list(next_url, limit, acc + len(items))
 
 
-@cache
 def _parse_page(page_response: httpx.Response) -> str:
     page = page_response.text
     soup = BeautifulSoup(page, "html.parser")
@@ -53,6 +53,12 @@ def _parse_page(page_response: httpx.Response) -> str:
     assert imdb_id_match is not None
     imdb_id = imdb_id_match.group(1)
     return imdb_id
+
+def get_tconst(url, db: 'DBConnection'):
+    try:
+        return db.get_tconst(url)
+    except KeyError:
+        return _parse_page(url)
 
 
 def download_list(
@@ -72,9 +78,10 @@ def download_list(
         numerical_limit = limit
     movie_links = _find_pages_in_list(list_url, limit=numerical_limit)
     pages = asyncio.run(download_pages(movie_links))
+    db = DBConnection()
     for page in itertools.islice(pages, limit):
         try:
-            tconst = _parse_page(page)
+            tconst = get_tconst(page, db)
             yield tconst
         except MissingIMDbPage as e:
             if strict:

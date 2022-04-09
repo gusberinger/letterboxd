@@ -1,7 +1,7 @@
 import logging
 import re
 import itertools
-from typing import Iterable, Optional
+from typing import Iterable, List, Optional
 import httpx
 from bs4 import BeautifulSoup, Tag
 
@@ -48,9 +48,25 @@ def _parse_page(page_response: httpx.Response) -> str:
     return imdb_id
 
 
-def download_list(
-    list_url: str, limit: Optional[int] = None, rate: int = 1, strict: bool = False
-) -> Iterable[str]:
+def download_urls(url_list: Iterable[str]) -> Iterable[str]:
+    """
+    Returns a list of tconsts.
+    """
+    db = DBConnection()
+    for page_url in url_list:
+        try:
+            tconst = db.get_tconst(page_url)
+            yield tconst
+        except KeyError:
+            page = httpx.get(page_url)
+            tconst = _parse_page(page)
+            db.cache_url(page_url, tconst)
+            yield tconst
+        except MissingIMDbPage as e:
+            logging.warn(f"Movie at url:{page_url} has no IMDb page.")
+
+
+def download_list(list_url: str, limit: Optional[int] = None) -> Iterable[str]:
     """
     Parameters
     ___
@@ -64,18 +80,5 @@ def download_list(
     else:
         numerical_limit = limit
     page_urls = find_urls_in_list(list_url, limit=numerical_limit)
-    db = DBConnection()
-    for page_url in itertools.islice(page_urls, limit):
-        try:
-            tconst = db.get_tconst(page_url)
-            yield tconst
-        except KeyError:
-            page = httpx.get(page_url)
-            tconst = _parse_page(page)
-            db.cache_url(page_url, tconst)
-            yield tconst
-        except MissingIMDbPage as e:
-            if strict:
-                raise e
-            else:
-                logging.warn(f"Movie at url:{page_url} has no IMDb page.")
+    tconsts = download_urls(page_urls)
+    return itertools.islice(tconsts, limit)

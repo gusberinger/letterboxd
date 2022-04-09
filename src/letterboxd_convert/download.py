@@ -1,5 +1,6 @@
 from functools import cache
 import re
+import itertools
 from typing import Iterable, Optional
 import httpx
 import asyncio
@@ -71,11 +72,10 @@ def download_list(
         numerical_limit = limit
     movie_links = _find_pages_in_list(list_url, limit=numerical_limit)
     pages = asyncio.run(download_pages(movie_links))
-    for page in pages:
+    for page in itertools.islice(pages, limit):
         try:
             tconst = _parse_page(page)
             yield tconst
         except MissingIMDbPage as e:
             if strict:
-                raise e()
-
+                raise e

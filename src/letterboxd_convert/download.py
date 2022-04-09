@@ -1,3 +1,4 @@
+import logging
 import re
 import itertools
 from typing import Iterable, Optional
@@ -75,3 +76,5 @@ def download_list(
         except MissingIMDbPage as e:
             if strict:
                 raise e
+            else:
+                logging.warn(f"Movie at url:{page_url} has no IMDb page.")

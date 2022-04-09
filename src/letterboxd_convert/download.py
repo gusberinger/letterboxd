@@ -75,6 +75,7 @@ def download_urls(url_list: List[str]) -> List[str]:
     for i, page in zip(request_index, pages):
         tconst = _parse_page(page)
         result[i] = tconst
+        db.cache_url(url_list[i], tconst)
     return result
 
 

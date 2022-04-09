@@ -72,6 +72,7 @@ def download_list(
         except KeyError:
             page = httpx.get(page_url)
             tconst = _parse_page(page)
+            db.cache_url(page_url, tconst)
             yield tconst
         except MissingIMDbPage as e:
             if strict:

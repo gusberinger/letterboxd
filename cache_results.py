@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import sqlite3
 from pathlib import Path
 
@@ -38,10 +37,14 @@ class DBConnection:
         self.cursor = self.con.cursor()
         self.cursor.execute(create_table_query)
         movies_req = self.cursor.executemany("SELECT url, tconst FROM cache")
-        movies = dict(movies_req.fetchall())
+        self.movies = dict(movies_req.fetchall())
 
     def __del__(self) -> None:
         self.cursor.close()
         self.con.close()
 
-    # def fetch_movies(self, url_list: List[str]):
+    def get_tconst(self, url) -> str:
+        return self.movies[url]
+
+    def cache_url(self, url, tconst) -> None:
+        self.cursor.execute("INSERT INTO cache values (?, ?)", (url, tconst))

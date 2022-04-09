@@ -14,6 +14,13 @@ class MissingIMDbPage(Exception):
     """IMDb does not contain this movie."""
 
 
+async def download_pages(page_urls: Iterable[str]) -> Iterable[httpx.Response]:
+    async with httpx.AsyncClient() as client:
+        pages = (client.get(url) for url in page_urls)
+        responses = await asyncio.gather(*pages)
+    return responses
+
+
 def _find_pages_in_list(
     list_url: str, limit: float = float("inf"), acc: int = 0
 ) -> Iterable[str]:
@@ -30,13 +37,6 @@ def _find_pages_in_list(
         assert isinstance(next_url_tag, Tag)
         next_url = f"{base_url}{next_url_tag.get('href')}"
         yield from _find_pages_in_list(next_url, limit, acc + len(items))
-
-
-async def download_pages(page_urls: Iterable[str]) -> Iterable[httpx.Response]:
-    async with httpx.AsyncClient() as client:
-        pages = (client.get(url) for url in page_urls)
-        responses = await asyncio.gather(*pages)
-    return responses
 
 
 @cache

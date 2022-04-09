@@ -1,6 +1,4 @@
-import time
 import unittest
-import letterboxd_convert
 from letterboxd_convert.database import DBConnection
 from letterboxd_convert.download import download_urls
 

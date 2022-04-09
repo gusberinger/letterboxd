@@ -1,5 +1,4 @@
 from functools import cache
-import itertools
 import re
 from typing import Iterable, Optional
 import httpx
@@ -8,6 +7,10 @@ from bs4 import BeautifulSoup, Tag
 
 base_url = "https://letterboxd.com"
 imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetails")
+
+
+class MissingIMDbPage(Exception):
+    """IMDb does not contain this movie."""
 
 
 def _find_pages_in_list(
@@ -40,6 +43,8 @@ def _parse_page(page_response: httpx.Response) -> str:
     page = page_response.text
     soup = BeautifulSoup(page, "html.parser")
     imdb_tag = soup.find("a", {"data-track-action": "IMDb"})
+    if imdb_tag is None:
+        raise MissingIMDbPage()
     assert isinstance(imdb_tag, Tag)
     imdb_url = imdb_tag.get("href")
     assert isinstance(imdb_url, str)
@@ -50,7 +55,7 @@ def _parse_page(page_response: httpx.Response) -> str:
 
 
 def download_list(
-    list_url: str, limit: Optional[int] = None, rate: int = 1
+    list_url: str, limit: Optional[int] = None, rate: int = 1, strict: bool = False
 ) -> Iterable[str]:
     """
     Parameters
@@ -66,5 +71,11 @@ def download_list(
         numerical_limit = limit
     movie_links = _find_pages_in_list(list_url, limit=numerical_limit)
     pages = asyncio.run(download_pages(movie_links))
-    imdb_ids = (_parse_page(page) for page in pages)
-    return itertools.islice(imdb_ids, limit)
+    for page in pages:
+        try:
+            tconst = _parse_page(page)
+            yield tconst
+        except MissingIMDbPage as e:
+            if strict:
+                raise e()
+

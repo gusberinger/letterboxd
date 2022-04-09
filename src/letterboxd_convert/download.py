@@ -1,10 +1,10 @@
-from functools import cache
 import re
 import itertools
 from typing import Iterable, Optional
 import httpx
-import asyncio
 from bs4 import BeautifulSoup, Tag
+
+from letterboxd_convert.database import DBConnection
 
 base_url = "https://letterboxd.com"
 imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetails")
@@ -14,7 +14,7 @@ class MissingIMDbPage(Exception):
     """IMDb does not contain this movie."""
 
 
-def _find_pages_in_list(
+def find_urls_in_list(
     list_url: str, limit: float = float("inf"), acc: int = 0
 ) -> Iterable[str]:
     """Finds all the links from a list"""
@@ -29,17 +29,9 @@ def _find_pages_in_list(
     if next_url_tag and acc < limit:
         assert isinstance(next_url_tag, Tag)
         next_url = f"{base_url}{next_url_tag.get('href')}"
-        yield from _find_pages_in_list(next_url, limit, acc + len(items))
+        yield from find_urls_in_list(next_url, limit, acc + len(items))
 
 
-async def download_pages(page_urls: Iterable[str]) -> Iterable[httpx.Response]:
-    async with httpx.AsyncClient() as client:
-        pages = (client.get(url) for url in page_urls)
-        responses = await asyncio.gather(*pages)
-    return responses
-
-
-@cache
 def _parse_page(page_response: httpx.Response) -> str:
     page = page_response.text
     soup = BeautifulSoup(page, "html.parser")
@@ -70,10 +62,14 @@ def download_list(
         numerical_limit = float("inf")
     else:
         numerical_limit = limit
-    movie_links = _find_pages_in_list(list_url, limit=numerical_limit)
-    pages = asyncio.run(download_pages(movie_links))
-    for page in itertools.islice(pages, limit):
+    page_urls = find_urls_in_list(list_url, limit=numerical_limit)
+    db = DBConnection()
+    for page_url in itertools.islice(page_urls, limit):
         try:
+            tconst = db.get_tconst(page_url)
+            yield tconst
+        except KeyError:
+            page = httpx.get(page_url)
             tconst = _parse_page(page)
             yield tconst
         except MissingIMDbPage as e:

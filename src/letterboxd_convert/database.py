@@ -49,3 +49,7 @@ class DBConnection:
     def cache_url(self, url: str, tconst: str) -> None:
         self.cursor.execute("INSERT INTO cache values (?, ?)", (url, tconst))
         self.con.commit()
+
+    def clear_cache(self) -> None:
+        self.cursor.execute("DROP TABLE cache")
+        self.cursor.execute(create_table_query)

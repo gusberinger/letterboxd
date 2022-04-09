@@ -91,6 +91,6 @@ def download_list(list_url: str, limit: Optional[int] = None) -> Iterable[str]:
         numerical_limit = float("inf")
     else:
         numerical_limit = limit
-    page_urls = find_urls_in_list(list_url, limit=numerical_limit)
-    tconsts = download_urls(list(page_urls))
+    page_urls = list(itertools.islice(find_urls_in_list(list_url, limit=numerical_limit), limit))
+    tconsts = download_urls(page_urls)
     return itertools.islice(tconsts, limit)

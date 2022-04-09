@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import re
 import itertools
 from typing import Iterable, Optional
@@ -13,6 +14,13 @@ imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetail
 
 class MissingIMDbPage(Exception):
     """IMDb does not contain this movie."""
+
+
+async def async_download_pages(page_urls: Iterable[str]) -> Iterable[httpx.Response]:
+    async with httpx.AsyncClient() as client:
+        pages = (client.get(url) for url in page_urls)
+        responses = await asyncio.gather(*pages)
+    return responses
 
 
 def find_urls_in_list(
@@ -52,19 +60,23 @@ def download_urls(url_list: Iterable[str]) -> Iterable[str]:
     """
     Returns a list of tconsts.
     """
+    result = [None] * len(url_list)
     db = DBConnection()
-    for page_url in url_list:
+    request_download = []
+    request_index = []
+    for i, page_url in enumerate(url_list):
         try:
             tconst = db.get_tconst(page_url)
-            yield tconst
+            result[i] = tconst
         except KeyError:
-            page = httpx.get(page_url)
-            tconst = _parse_page(page)
-            db.cache_url(page_url, tconst)
-            yield tconst
-        except MissingIMDbPage:
-            logging.warn(f"Movie at url:{page_url} has no IMDb page.")
+            request_download.append(page_url)
+            request_index.append(i)
 
+    pages = asyncio.run(async_download_pages(request_download))
+    for i, page in zip(request_index, pages):
+        tconst = _parse_page(page)
+        result[i] = tconst
+    return result
 
 def download_list(list_url: str, limit: Optional[int] = None) -> Iterable[str]:
     """
@@ -80,5 +92,5 @@ def download_list(list_url: str, limit: Optional[int] = None) -> Iterable[str]:
     else:
         numerical_limit = limit
     page_urls = find_urls_in_list(list_url, limit=numerical_limit)
-    tconsts = download_urls(page_urls)
+    tconsts = download_urls(list(page_urls))
     return itertools.islice(tconsts, limit)

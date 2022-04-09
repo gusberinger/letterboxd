@@ -36,7 +36,7 @@ class DBConnection:
         self.con = sqlite3.connect(DB_PATH)
         self.cursor = self.con.cursor()
         self.cursor.execute(create_table_query)
-        movies_req = self.cursor.executemany("SELECT url, tconst FROM cache")
+        movies_req = self.cursor.execute("SELECT url, tconst FROM cache")
         self.movies = dict(movies_req.fetchall())
 
     def __del__(self) -> None:

@@ -43,8 +43,8 @@ class DBConnection:
         self.cursor.close()
         self.con.close()
 
-    def get_tconst(self, url) -> str:
+    def get_tconst(self, url: str) -> str:
         return self.movies[url]
 
-    def cache_url(self, url, tconst) -> None:
+    def cache_url(self, url: str, tconst: str) -> None:
         self.cursor.execute("INSERT INTO cache values (?, ?)", (url, tconst))

@@ -36,10 +36,12 @@ def find_urls_in_single_list_page(soup: BeautifulSoup) -> Iterable[str]:
 def find_urls_in_list(list_url: str, limit: Optional[int]) -> Iterable[str]:
     first_page_response = httpx.get(list_url)
     first_page_soup = BeautifulSoup(first_page_response.text, "html.parser")
+    yield from find_urls_in_single_list_page(first_page_soup)
     paginate_div = first_page_soup.find("div", class_="paginate-pages")
-    # one-page list
+    
+    # single-page list
     if paginate_div is None:
-        return find_urls_in_single_list_page(first_page_soup)
+        return
 
     assert isinstance(paginate_div, Tag)
     last_page_li_tags = paginate_div.find_all("li")
@@ -53,7 +55,7 @@ def find_urls_in_list(list_url: str, limit: Optional[int]) -> Iterable[str]:
     found_urls = itertools.chain(
         *(find_urls_in_single_list_page(soup) for soup in page_soups)
     )
-    return itertools.islice(found_urls, limit)
+    yield from itertools.islice(found_urls, limit)
 
 
 def _parse_page(page_response: httpx.Response) -> str:

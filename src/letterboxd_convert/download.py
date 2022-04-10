@@ -49,10 +49,10 @@ def _parse_page(page_response: httpx.Response) -> str:
     assert isinstance(imdb_tag, Tag)
     imdb_url = imdb_tag.get("href")
     assert isinstance(imdb_url, str)
-    imdb_id_match = re.match(imdb_pattern, imdb_url)
-    assert imdb_id_match is not None
-    imdb_id = imdb_id_match.group(1)
-    return imdb_id
+    tconst_match = re.match(imdb_pattern, imdb_url)
+    assert tconst_match is not None
+    tconst = tconst_match.group(1)
+    return tconst
 
 
 def download_urls(url_list: List[str]) -> List[str]:

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import re
 import itertools
 from typing import Iterable, List, Optional
@@ -55,11 +56,11 @@ def _parse_page(page_response: httpx.Response) -> str:
     return tconst
 
 
-def download_urls(url_list: List[str]) -> List[str]:
+def download_urls(url_list: List[str]) -> Iterable[str]:
     """
     Returns a list of tconsts.
     """
-    result: List[str] = [''] * len(url_list)
+    result: List[str] = [""] * len(url_list)
     db = DBConnection()
     request_download = []
     request_index = []
@@ -73,10 +74,17 @@ def download_urls(url_list: List[str]) -> List[str]:
 
     pages = asyncio.run(async_download_pages(request_download))
     for i, page in zip(request_index, pages):
-        tconst = _parse_page(page)
-        result[i] = tconst
-        db.cache_url(url_list[i], tconst)
-    return result
+        try:
+            tconst = _parse_page(page)
+            result[i] = tconst
+            db.cache_url(url_list[i], tconst)
+        except MissingIMDbPage:
+            result[i] = ""
+            logging.warn(
+                f"Skipping movie at url {url_list[i]}. "
+                "No corresponding IMDb page listed."
+            )
+    return filter(bool, result)
 
 
 def download_list(list_url: str, limit: Optional[int] = None) -> Iterable[str]:

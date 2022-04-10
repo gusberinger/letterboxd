@@ -1,5 +1,6 @@
 import unittest
 from letterboxd_convert import download_list
+from letterboxd_convert.database import DBConnection
 from letterboxd_convert.parse import parse_args
 
 
@@ -231,5 +232,6 @@ class ArgumentParseTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    # DownloadListTest = None
+    db = DBConnection()
+    db.clear_cache()
     unittest.main()

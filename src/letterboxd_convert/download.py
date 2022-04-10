@@ -1,11 +1,10 @@
 import asyncio
+import itertools
 import logging
 import re
-import itertools
 from typing import Iterable, List, Optional
 import httpx
 from bs4 import BeautifulSoup, Tag
-
 from letterboxd_convert.database import DBConnection
 
 base_url = "https://letterboxd.com"
@@ -23,35 +22,46 @@ async def async_download_pages(page_urls: Iterable[str]) -> Iterable[httpx.Respo
     return responses
 
 
-def find_urls_in_list(
-    list_url: str, limit: float = float("inf"), acc: int = 0
-) -> Iterable[str]:
-    """Finds all the links from a list"""
-    response = httpx.get(list_url)
-    soup = BeautifulSoup(response.text, "html.parser")
+def find_urls_in_single_list_page(soup: BeautifulSoup) -> Iterable[str]:
+    """Finds all the urls from a single list page"""
+    # soup = BeautifulSoup(page, "html.parser")
     poster_table = soup.find("ul", class_="poster-list")
     assert isinstance(poster_table, Tag)
     items = poster_table.find_all("li")
     movie_links = (f"{base_url}{li.div.get('data-film-slug')}" for li in items)
     yield from movie_links
-    next_url_tag = soup.find("a", class_="next")
-    if next_url_tag and acc < limit:
-        assert isinstance(next_url_tag, Tag)
-        next_url = f"{base_url}{next_url_tag.get('href')}"
-        yield from find_urls_in_list(next_url, limit, acc + len(items))
+
+
+def find_urls_in_list(list_url: str, limit: Optional[int]) -> Iterable[str]:
+    first_page_response = httpx.get(list_url)
+    first_page_soup = BeautifulSoup(first_page_response.text, "html.parser")
+    yield from find_urls_in_single_list_page(first_page_soup)
+    paginate_div = first_page_soup.find("div", class_="paginate-pages")
+
+    # single-page list
+    if paginate_div is None:
+        return
+
+    assert isinstance(paginate_div, Tag)
+    last_page_li_tags = paginate_div.find_all("li")
+    total_pages = int(list(last_page_li_tags)[-1].text)
+
+    page_urls = [f"{list_url}page/{i}/" for i in range(2, total_pages + 1)]
+    page_respones = asyncio.run(async_download_pages(page_urls))
+    page_soups = (
+        BeautifulSoup(response.text, "html.parser") for response in page_respones
+    )
+    found_urls = itertools.chain(
+        *(find_urls_in_single_list_page(soup) for soup in page_soups)
+    )
+    yield from itertools.islice(found_urls, limit)
 
 
 def _parse_page(page_response: httpx.Response) -> str:
     page = page_response.text
-    soup = BeautifulSoup(page, "html.parser")
-    imdb_tag = soup.find("a", {"data-track-action": "IMDb"})
-    if imdb_tag is None:
+    tconst_match = re.search(imdb_pattern, page)
+    if tconst_match is None:
         raise MissingIMDbPage()
-    assert isinstance(imdb_tag, Tag)
-    imdb_url = imdb_tag.get("href")
-    assert isinstance(imdb_url, str)
-    tconst_match = re.match(imdb_pattern, imdb_url)
-    assert tconst_match is not None
     tconst = tconst_match.group(1)
     return tconst
 
@@ -96,12 +106,6 @@ def download_list(list_url: str, limit: Optional[int] = None) -> Iterable[str]:
     limit:
         The maximum number of movies to fetch from the list.
     """
-    if limit is None:
-        numerical_limit = float("inf")
-    else:
-        numerical_limit = limit
-    page_urls = list(
-        itertools.islice(find_urls_in_list(list_url, limit=numerical_limit), limit)
-    )
+    page_urls = list(find_urls_in_list(list_url, limit))
     tconsts = download_urls(page_urls)
     return itertools.islice(tconsts, limit)

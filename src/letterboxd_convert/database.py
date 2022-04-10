@@ -54,3 +54,4 @@ class DBConnection:
     def clear_cache(self) -> None:
         self.cursor.execute("DROP TABLE cache")
         self.cursor.execute(create_table_query)
+        self.movies = []

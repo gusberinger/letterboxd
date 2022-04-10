@@ -1,10 +1,11 @@
-from functools import cache
+import asyncio
 import re
 import itertools
-from typing import Iterable, Optional
+from typing import Iterable, List, Optional
 import httpx
-import asyncio
 from bs4 import BeautifulSoup, Tag
+
+from letterboxd_convert.database import DBConnection
 
 base_url = "https://letterboxd.com"
 imdb_pattern = re.compile(r"http:\/\/www\.imdb\.com/title/(tt\d{7,8})/maindetails")
@@ -14,7 +15,14 @@ class MissingIMDbPage(Exception):
     """IMDb does not contain this movie."""
 
 
-def _find_pages_in_list(
+async def async_download_pages(page_urls: Iterable[str]) -> Iterable[httpx.Response]:
+    async with httpx.AsyncClient() as client:
+        pages = (client.get(url) for url in page_urls)
+        responses = await asyncio.gather(*pages)
+    return responses
+
+
+def find_urls_in_list(
     list_url: str, limit: float = float("inf"), acc: int = 0
 ) -> Iterable[str]:
     """Finds all the links from a list"""
@@ -29,17 +37,9 @@ def _find_pages_in_list(
     if next_url_tag and acc < limit:
         assert isinstance(next_url_tag, Tag)
         next_url = f"{base_url}{next_url_tag.get('href')}"
-        yield from _find_pages_in_list(next_url, limit, acc + len(items))
+        yield from find_urls_in_list(next_url, limit, acc + len(items))
 
 
-async def download_pages(page_urls: Iterable[str]) -> Iterable[httpx.Response]:
-    async with httpx.AsyncClient() as client:
-        pages = (client.get(url) for url in page_urls)
-        responses = await asyncio.gather(*pages)
-    return responses
-
-
-@cache
 def _parse_page(page_response: httpx.Response) -> str:
     page = page_response.text
     soup = BeautifulSoup(page, "html.parser")
@@ -49,15 +49,37 @@ def _parse_page(page_response: httpx.Response) -> str:
     assert isinstance(imdb_tag, Tag)
     imdb_url = imdb_tag.get("href")
     assert isinstance(imdb_url, str)
-    imdb_id_match = re.match(imdb_pattern, imdb_url)
-    assert imdb_id_match is not None
-    imdb_id = imdb_id_match.group(1)
-    return imdb_id
+    tconst_match = re.match(imdb_pattern, imdb_url)
+    assert tconst_match is not None
+    tconst = tconst_match.group(1)
+    return tconst
 
 
-def download_list(
-    list_url: str, limit: Optional[int] = None, rate: int = 1, strict: bool = False
-) -> Iterable[str]:
+def download_urls(url_list: List[str]) -> List[str]:
+    """
+    Returns a list of tconsts.
+    """
+    result: List[str] = [''] * len(url_list)
+    db = DBConnection()
+    request_download = []
+    request_index = []
+    for i, page_url in enumerate(url_list):
+        try:
+            tconst = db.get_tconst(page_url)
+            result[i] = tconst
+        except KeyError:
+            request_download.append(page_url)
+            request_index.append(i)
+
+    pages = asyncio.run(async_download_pages(request_download))
+    for i, page in zip(request_index, pages):
+        tconst = _parse_page(page)
+        result[i] = tconst
+        db.cache_url(url_list[i], tconst)
+    return result
+
+
+def download_list(list_url: str, limit: Optional[int] = None) -> Iterable[str]:
     """
     Parameters
     ___
@@ -70,12 +92,8 @@ def download_list(
         numerical_limit = float("inf")
     else:
         numerical_limit = limit
-    movie_links = _find_pages_in_list(list_url, limit=numerical_limit)
-    pages = asyncio.run(download_pages(movie_links))
-    for page in itertools.islice(pages, limit):
-        try:
-            tconst = _parse_page(page)
-            yield tconst
-        except MissingIMDbPage as e:
-            if strict:
-                raise e
+    page_urls = list(
+        itertools.islice(find_urls_in_list(list_url, limit=numerical_limit), limit)
+    )
+    tconsts = download_urls(page_urls)
+    return itertools.islice(tconsts, limit)

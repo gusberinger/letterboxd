@@ -1,10 +1,11 @@
 import asyncio
 import logging
+from random import betavariate
 import re
 import itertools
 from typing import Iterable, List, Optional
 import httpx
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, PageElement, Tag
 
 from letterboxd_convert.database import DBConnection
 
@@ -23,22 +24,33 @@ async def async_download_pages(page_urls: Iterable[str]) -> Iterable[httpx.Respo
     return responses
 
 
-def find_urls_in_list(
-    list_url: str, limit: float = float("inf"), acc: int = 0
-) -> Iterable[str]:
-    """Finds all the links from a list"""
-    response = httpx.get(list_url)
-    soup = BeautifulSoup(response.text, "html.parser")
+def find_urls_in_single_list_page(soup: BeautifulSoup) -> Iterable[str]:
+    """Finds all the urls from a single list page"""
+    # soup = BeautifulSoup(page, "html.parser")
     poster_table = soup.find("ul", class_="poster-list")
     assert isinstance(poster_table, Tag)
     items = poster_table.find_all("li")
     movie_links = (f"{base_url}{li.div.get('data-film-slug')}" for li in items)
     yield from movie_links
-    next_url_tag = soup.find("a", class_="next")
-    if next_url_tag and acc < limit:
-        assert isinstance(next_url_tag, Tag)
-        next_url = f"{base_url}{next_url_tag.get('href')}"
-        yield from find_urls_in_list(next_url, limit, acc + len(items))
+
+
+def find_urls_in_list(list_url : str, limit: int) -> Iterable[str]:
+    first_page_response = httpx.get(list_url)
+    first_page_soup = BeautifulSoup(first_page_response.text, "html.parser")
+    paginate_div = first_page_soup.find("div", class_ = "paginate-pages")
+    # one-page list
+    if paginate_div is None:    
+        return find_urls_in_single_list_page(first_page_soup)
+
+    assert isinstance(paginate_div, Tag)
+    last_page_li_tags = paginate_div.find_all("li")
+    total_pages = int(list(last_page_li_tags)[-1].text)
+
+    page_urls = [f"{list_url}/page/{i}" for i in range(2, total_pages + 1)]
+    page_respones = asyncio.run(async_download_pages(page_urls))
+    page_soups = (BeautifulSoup(response.text, "html.parser") for response in page_respones)
+    urls = (find_urls_in_single_list_page(soup) for soup in page_soups)
+    return urls
 
 
 def _parse_page(page_response: httpx.Response) -> str:

@@ -79,9 +79,10 @@ def download_urls(url_list: List[str]) -> Iterable[str]:
             result[i] = tconst
             db.cache_url(url_list[i], tconst)
         except MissingIMDbPage:
-            result[i] = ''
+            result[i] = ""
             logging.warn(
-                f"Skipping movie at url {url_list[i]}. No corresponding IMDb page listed."
+                f"Skipping movie at url {url_list[i]}. "
+                "No corresponding IMDb page listed."
             )
     return filter(bool, result)
 

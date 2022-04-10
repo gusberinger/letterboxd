@@ -59,15 +59,9 @@ def find_urls_in_list(list_url: str, limit: Optional[int]) -> Iterable[str]:
 
 def _parse_page(page_response: httpx.Response) -> str:
     page = page_response.text
-    soup = BeautifulSoup(page, "html.parser")
-    imdb_tag = soup.find("a", {"data-track-action": "IMDb"})
-    if imdb_tag is None:
+    tconst_match = re.search(imdb_pattern, page)
+    if tconst_match is None:
         raise MissingIMDbPage()
-    assert isinstance(imdb_tag, Tag)
-    imdb_url = imdb_tag.get("href")
-    assert isinstance(imdb_url, str)
-    tconst_match = re.match(imdb_pattern, imdb_url)
-    assert tconst_match is not None
     tconst = tconst_match.group(1)
     return tconst
 

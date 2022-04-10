@@ -34,7 +34,7 @@ def find_urls_in_single_list_page(soup: BeautifulSoup) -> Iterable[str]:
     yield from movie_links
 
 
-def find_urls_in_list(list_url : str, limit: int) -> Iterable[str]:
+def find_urls_in_list(list_url : str, limit: Optional[int]) -> Iterable[str]:
     first_page_response = httpx.get(list_url)
     first_page_soup = BeautifulSoup(first_page_response.text, "html.parser")
     paginate_div = first_page_soup.find("div", class_ = "paginate-pages")
@@ -46,11 +46,11 @@ def find_urls_in_list(list_url : str, limit: int) -> Iterable[str]:
     last_page_li_tags = paginate_div.find_all("li")
     total_pages = int(list(last_page_li_tags)[-1].text)
 
-    page_urls = [f"{list_url}/page/{i}" for i in range(2, total_pages + 1)]
+    page_urls = [f"{list_url}page/{i}/" for i in range(2, total_pages + 1)]
     page_respones = asyncio.run(async_download_pages(page_urls))
     page_soups = (BeautifulSoup(response.text, "html.parser") for response in page_respones)
-    urls = (find_urls_in_single_list_page(soup) for soup in page_soups)
-    return urls
+    found_urls = itertools.chain(*(find_urls_in_single_list_page(soup) for soup in page_soups))
+    return itertools.islice(found_urls, limit)
 
 
 def _parse_page(page_response: httpx.Response) -> str:
@@ -113,7 +113,7 @@ def download_list(list_url: str, limit: Optional[int] = None) -> Iterable[str]:
     else:
         numerical_limit = limit
     page_urls = list(
-        itertools.islice(find_urls_in_list(list_url, limit=numerical_limit), limit)
+        find_urls_in_list(list_url, limit)
     )
     tconsts = download_urls(page_urls)
     return itertools.islice(tconsts, limit)

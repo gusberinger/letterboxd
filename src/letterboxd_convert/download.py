@@ -1,7 +1,7 @@
 import asyncio
+import itertools
 import logging
 import re
-import itertools
 from typing import Iterable, List, Optional
 import httpx
 from bs4 import BeautifulSoup, Tag

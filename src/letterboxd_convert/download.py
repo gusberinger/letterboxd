@@ -1,11 +1,10 @@
 import asyncio
 import logging
-from random import betavariate
 import re
 import itertools
 from typing import Iterable, List, Optional
 import httpx
-from bs4 import BeautifulSoup, PageElement, Tag
+from bs4 import BeautifulSoup, Tag
 
 from letterboxd_convert.database import DBConnection
 
@@ -34,12 +33,12 @@ def find_urls_in_single_list_page(soup: BeautifulSoup) -> Iterable[str]:
     yield from movie_links
 
 
-def find_urls_in_list(list_url : str, limit: Optional[int]) -> Iterable[str]:
+def find_urls_in_list(list_url: str, limit: Optional[int]) -> Iterable[str]:
     first_page_response = httpx.get(list_url)
     first_page_soup = BeautifulSoup(first_page_response.text, "html.parser")
-    paginate_div = first_page_soup.find("div", class_ = "paginate-pages")
+    paginate_div = first_page_soup.find("div", class_="paginate-pages")
     # one-page list
-    if paginate_div is None:    
+    if paginate_div is None:
         return find_urls_in_single_list_page(first_page_soup)
 
     assert isinstance(paginate_div, Tag)
@@ -48,8 +47,12 @@ def find_urls_in_list(list_url : str, limit: Optional[int]) -> Iterable[str]:
 
     page_urls = [f"{list_url}page/{i}/" for i in range(2, total_pages + 1)]
     page_respones = asyncio.run(async_download_pages(page_urls))
-    page_soups = (BeautifulSoup(response.text, "html.parser") for response in page_respones)
-    found_urls = itertools.chain(*(find_urls_in_single_list_page(soup) for soup in page_soups))
+    page_soups = (
+        BeautifulSoup(response.text, "html.parser") for response in page_respones
+    )
+    found_urls = itertools.chain(
+        *(find_urls_in_single_list_page(soup) for soup in page_soups)
+    )
     return itertools.islice(found_urls, limit)
 
 
@@ -108,12 +111,6 @@ def download_list(list_url: str, limit: Optional[int] = None) -> Iterable[str]:
     limit:
         The maximum number of movies to fetch from the list.
     """
-    if limit is None:
-        numerical_limit = float("inf")
-    else:
-        numerical_limit = limit
-    page_urls = list(
-        find_urls_in_list(list_url, limit)
-    )
+    page_urls = list(find_urls_in_list(list_url, limit))
     tconsts = download_urls(page_urls)
     return itertools.islice(tconsts, limit)

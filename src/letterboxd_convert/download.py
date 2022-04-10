@@ -5,7 +5,6 @@ import itertools
 from typing import Iterable, List, Optional
 import httpx
 from bs4 import BeautifulSoup, Tag
-
 from letterboxd_convert.database import DBConnection
 
 base_url = "https://letterboxd.com"

@@ -38,7 +38,7 @@ def find_urls_in_list(list_url: str, limit: Optional[int]) -> Iterable[str]:
     first_page_soup = BeautifulSoup(first_page_response.text, "html.parser")
     yield from find_urls_in_single_list_page(first_page_soup)
     paginate_div = first_page_soup.find("div", class_="paginate-pages")
-    
+
     # single-page list
     if paginate_div is None:
         return

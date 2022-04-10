@@ -76,12 +76,13 @@ def download_urls(url_list: List[str]) -> Iterable[str]:
     for i, page in zip(request_index, pages):
         try:
             tconst = _parse_page(page)
+            result[i] = tconst
+            db.cache_url(url_list[i], tconst)
         except MissingIMDbPage:
             result[i] = ''
             logging.warn(
                 f"Skipping movie at url {url_list[i]}. No corresponding IMDb page listed."
             )
-        db.cache_url(url_list[i], tconst)
     return filter(bool, result)
 
 
@@ -101,6 +102,5 @@ def download_list(list_url: str, limit: Optional[int] = None) -> Iterable[str]:
     page_urls = list(
         itertools.islice(find_urls_in_list(list_url, limit=numerical_limit), limit)
     )
-    print("downloading pages")
     tconsts = download_urls(page_urls)
     return itertools.islice(tconsts, limit)
